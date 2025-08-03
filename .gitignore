@@ -4,6 +4,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Firebase Service Account
+src/main/resources/serviceAccountKey.json
+
 ### STS ###
 .apt_generated
 .classpath
