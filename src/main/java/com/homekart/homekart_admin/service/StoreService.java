@@ -3,6 +3,7 @@ package com.homekart.homekart_admin.service;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
+import com.homekart.homekart_admin.model.PizzaModel;
 import com.homekart.homekart_admin.model.Store;
 import com.homekart.homekart_admin.model.StoreMenuItem;
 import org.springframework.stereotype.Service;
@@ -87,4 +88,82 @@ public class StoreService {
 
         return menuList;
     }
+
+    // Add multiple pizzas to a store's menu
+    public String addPizzas(String storeId, List<PizzaModel> pizzas) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        WriteBatch batch = db.batch();
+
+        CollectionReference pizzaCollection = db.collection(COLLECTION_NAME)
+                .document(storeId)
+                .collection("menu");
+
+        for (PizzaModel pizza : pizzas) {
+            if (pizza.getId() == null || pizza.getId().isEmpty()) {
+                pizza.setId(UUID.randomUUID().toString());
+            }
+            pizza.setCreatedAt(new Date());
+            pizza.setCategory("Pizza"); // Optional: mark category
+            DocumentReference docRef = pizzaCollection.document(pizza.getId());
+            batch.set(docRef, pizza);
+        }
+
+        batch.commit().get();
+        return "Inserted " + pizzas.size() + " pizzas for store " + storeId + " successfully.";
+    }
+
+    // Get all pizzas from a store's menu
+    public List<PizzaModel> getAllPizzas(String storeId) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME)
+                .document(storeId)
+                .collection("menu")
+                .whereEqualTo("category", "Pizza") // Filter pizzas
+                .get();
+
+        List<PizzaModel> pizzas = new ArrayList<>();
+        for (QueryDocumentSnapshot doc : future.get().getDocuments()) {
+            pizzas.add(doc.toObject(PizzaModel.class));
+        }
+        return pizzas;
+    }
+
+    // Get a single pizza by ID from store's menu
+    public PizzaModel getPizzaById(String storeId, String pizzaId) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        DocumentSnapshot snapshot = db.collection(COLLECTION_NAME)
+                .document(storeId)
+                .collection("menu")
+                .document(pizzaId)
+                .get()
+                .get();
+
+        return snapshot.exists() ? snapshot.toObject(PizzaModel.class) : null;
+    }
+
+    // Update pizza in store's menu
+    public String updatePizza(String storeId, String pizzaId, PizzaModel pizza) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        pizza.setId(pizzaId);
+        db.collection(COLLECTION_NAME)
+                .document(storeId)
+                .collection("menu")
+                .document(pizzaId)
+                .set(pizza)
+                .get();
+        return "Pizza with ID " + pizzaId + " in store " + storeId + " updated successfully.";
+    }
+
+    // Delete pizza from store's menu
+    public String deletePizza(String storeId, String pizzaId) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        db.collection(COLLECTION_NAME)
+                .document(storeId)
+                .collection("menu")
+                .document(pizzaId)
+                .delete()
+                .get();
+        return "Pizza with ID " + pizzaId + " deleted from store " + storeId + " successfully.";
+    }
+
 }
