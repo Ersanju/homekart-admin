@@ -1,27 +1,59 @@
 package com.homekart.homekart_admin.controller;
 
+import com.homekart.homekart_admin.dto.ProductReviewRequest;
 import com.homekart.homekart_admin.model.Product;
 import com.homekart.homekart_admin.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/admin/product")
 public class ProductController {
 
-    private final ProductService productService;
+    @Autowired
+    private ProductService productService;
 
-    public ProductController(ProductService service) {
-        this.productService = service;
+    @PostMapping("/add-products")
+    public String addMultipleProducts(@RequestBody List<Product> products) throws ExecutionException, InterruptedException {
+        return productService.addMultipleProducts(products);
     }
 
-    @PostMapping
-    public ResponseEntity<?> createProduct(@RequestBody Product product) {
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String categoryId) {
         try {
-            String timestamp = productService.addProduct(product);
-            return ResponseEntity.ok("Product saved at: " + timestamp);
+            List<Product> products = productService.getProductsByCategory(categoryId);
+            return ResponseEntity.ok(products);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
         }
     }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable String id) {
+        try {
+            Product product = productService.getProductById(id);
+            if (product == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/add-reviews")
+    public String addMultipleReviews(@RequestBody ProductReviewRequest request)
+            throws ExecutionException, InterruptedException {
+        return productService.addReviewsToProduct(request.getProductId(), request.getReviews());
+    }
 }
+
+
