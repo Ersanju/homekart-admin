@@ -1,4 +1,4 @@
-package com.homekart.homekart_admin.model;
+package com.homekart.homekart_admin.model.store;
 
 import lombok.*;
 
@@ -13,6 +13,7 @@ import java.util.List;
 public class Store {
     private String id;
     private String name;
+    private String storeType;
     private String imageUrl;
     private String description;
     private String address;
