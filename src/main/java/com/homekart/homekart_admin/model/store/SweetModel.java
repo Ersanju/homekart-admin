@@ -1,13 +1,12 @@
 package com.homekart.homekart_admin.model.store;
 
 import lombok.*;
+import java.util.List;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class SweetModel {
-    private String id;
-    private String name;
-    private String description;
+    private List<SweetVariant> variants;
 }

@@ -1,8 +1,8 @@
 package com.homekart.homekart_admin.model;
 
+import com.google.cloud.Timestamp;
 import lombok.*;
 
-import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -18,5 +18,5 @@ public class Review {
     private String comment;
     private String occasion;
     private String place;
-    private Date createdAt;
+    private Timestamp createdAt;
 }

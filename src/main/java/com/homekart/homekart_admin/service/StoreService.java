@@ -4,15 +4,12 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
-import com.homekart.homekart_admin.model.store.PizzaModel;
-import com.homekart.homekart_admin.model.store.Review;
+import com.homekart.homekart_admin.model.Review;
 import com.homekart.homekart_admin.model.store.Store;
-import com.homekart.homekart_admin.model.StoreMenuItem;
 import com.homekart.homekart_admin.model.store.StoreItem;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -22,6 +19,7 @@ public class StoreService {
 
     private static final String COLLECTION_NAME = "stores";
 
+    // Add multiple stores
     public String addStores(List<Store> stores) throws ExecutionException, InterruptedException {
         Firestore db = FirestoreClient.getFirestore();
         WriteBatch batch = db.batch();
@@ -30,7 +28,9 @@ public class StoreService {
             if (store.getId() == null || store.getId().isEmpty()) {
                 store.setId(UUID.randomUUID().toString());
             }
-            store.setCreatedAt(new Date());
+            if (store.getCreatedAt() == null) {
+                store.setCreatedAt(Timestamp.now());
+            }
 
             DocumentReference docRef = db.collection(COLLECTION_NAME).document(store.getId());
             batch.set(docRef, store);
@@ -42,6 +42,7 @@ public class StoreService {
         return "Inserted " + stores.size() + " stores successfully.";
     }
 
+    // Get all stores
     public List<Store> getAllStores() throws ExecutionException, InterruptedException {
         Firestore db = FirestoreClient.getFirestore();
         ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME).get();
@@ -57,6 +58,7 @@ public class StoreService {
         return stores;
     }
 
+    // Add store items with nested product types
     public String addItemsToStore(String storeId, List<StoreItem> items) throws ExecutionException, InterruptedException {
         Firestore db = FirestoreClient.getFirestore();
         WriteBatch batch = db.batch();
@@ -68,18 +70,21 @@ public class StoreService {
         for (StoreItem item : items) {
             DocumentReference docRef;
 
+            // Auto-generate ID if missing
             if (item.getId() == null || item.getId().isEmpty()) {
-                docRef = itemsRef.document(); // auto-generate ID
+                docRef = itemsRef.document();
                 item.setId(docRef.getId());
             } else {
                 docRef = itemsRef.document(item.getId());
             }
 
-            // Set Firestore timestamps if not provided
+            // Ensure timestamps
             if (item.getCreatedAt() == null) {
                 item.setCreatedAt(Timestamp.now());
             }
             item.setUpdatedAt(Timestamp.now());
+
+            // Ensure review timestamps
             if (item.getReviews() != null) {
                 for (Review review : item.getReviews()) {
                     if (review.getCreatedAt() == null) {
@@ -97,15 +102,14 @@ public class StoreService {
         return "Inserted " + items.size() + " items into store " + storeId;
     }
 
+    // Fetch store items
     public List<StoreItem> getItemsByStore(String storeId) throws ExecutionException, InterruptedException {
         Firestore db = FirestoreClient.getFirestore();
 
-        // Reference to items sub-collection
         CollectionReference itemsRef = db.collection(COLLECTION_NAME)
                 .document(storeId)
                 .collection("items");
 
-        // Fetch all documents
         ApiFuture<QuerySnapshot> future = itemsRef.get();
         List<QueryDocumentSnapshot> documents = future.get().getDocuments();
 
@@ -117,5 +121,4 @@ public class StoreService {
 
         return items;
     }
-
 }

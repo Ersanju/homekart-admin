@@ -1,8 +1,8 @@
 package com.homekart.homekart_admin.model.store;
 
+import com.google.cloud.Timestamp;
 import lombok.*;
 
-import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -21,5 +21,5 @@ public class Store {
     private double latitude;
     private double longitude;
     private List<String> categories; // optional
-    private Date createdAt;
+    private Timestamp createdAt;
 }
